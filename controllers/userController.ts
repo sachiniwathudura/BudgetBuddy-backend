@@ -8,7 +8,7 @@ import { User } from "../model/User";
 const prisma = new PrismaClient();
 
 const usersController = {
-    //! Register
+    //? Register
     register: asyncHandler(async (req: Request, res: Response) => {
         const { username, email, password } = req.body;
 
@@ -20,7 +20,7 @@ const usersController = {
             return; // Ensure the function exits after sending the response
         }
 
-        //! Check if user already exists
+        //? Check if user already exists
         const userExists = await prisma.user.findUnique({ where: { email } });
         if (userExists) {
             res.status(400).json({
@@ -30,10 +30,10 @@ const usersController = {
             return;
         }
 
-        //! Hash password
+        //? Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        //! Create and save user
+        //? Create and save user
         const user: User = await prisma.user.create({
             data: { username, email, password: hashedPassword },
         });
@@ -45,11 +45,11 @@ const usersController = {
         });
     }),
 
-    //! Login
+    //? Login
     login: asyncHandler(async (req: Request, res: Response) => {
         const { email, password } = req.body;
 
-        //! Find user by email
+        //? Find user by email
         const user: User | null = await prisma.user.findUnique({ where: { email } });
         if (!user) {
             res.status(401).json({
@@ -59,7 +59,7 @@ const usersController = {
             return;
         }
 
-        //! Compare password
+        //? Compare password
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             res.status(401).json({
@@ -69,7 +69,7 @@ const usersController = {
             return;
         }
 
-        //! Generate token
+        //? Generate token
         const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET_KEY || "defaultKey", {
             expiresIn: "30d",
         });
@@ -82,7 +82,7 @@ const usersController = {
         });
     }),
 
-    //! Profile
+    //? Profile
     profile: asyncHandler(async (req: Request, res: Response) => {
         const userId = (req as any).user?.id;
 
@@ -94,7 +94,7 @@ const usersController = {
             return;
         }
 
-        //! Find user
+        //? Find user
         const user: User | null = await prisma.user.findUnique({ where: { id: userId } });
         if (!user) {
             res.status(404).json({
@@ -110,7 +110,7 @@ const usersController = {
         });
     }),
 
-    //! Change Password
+    //? Change Password
     changeUserPassword: asyncHandler(async (req: Request, res: Response) => {
         const userId = (req as any).user?.id;
         const { newPassword } = req.body;
@@ -123,7 +123,7 @@ const usersController = {
             return;
         }
 
-        //! Find user
+        //? Find user
         const user: User | null = await prisma.user.findUnique({ where: { id: userId } });
         if (!user) {
             res.status(404).json({
@@ -133,10 +133,10 @@ const usersController = {
             return;
         }
 
-        //! Hash new password
+        //? Hash new password
         const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-        //! Update user password
+        //? Update user password
         await prisma.user.update({
             where: { id: userId },
             data: { password: hashedPassword },
@@ -148,7 +148,7 @@ const usersController = {
         });
     }),
 
-    //! Update User Profile
+    //? Update User Profile
     updateUserProfile: asyncHandler(async (req: Request, res: Response) => {
         const userId = (req as any).user?.id;
         const { username, email } = req.body;
@@ -161,7 +161,7 @@ const usersController = {
             return;
         }
 
-        //! Update user fields
+        //? Update user fields
         const user: User = await prisma.user.update({
             where: { id: userId },
             data: { username, email },

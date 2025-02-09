@@ -2,7 +2,7 @@ import jwt, { JwtPayload } from "jsonwebtoken";
 import { Request, Response, NextFunction } from 'express';
 const isAuthenticated = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-        //! Get the token from the header
+        //? Get the token from the header
         const token = req.headers.authorization?.split(" ")[1];
 
         if (!token) {
@@ -12,11 +12,11 @@ const isAuthenticated = async (req: Request, res: Response, next: NextFunction):
 
         // //! Verify the token
         // const decoded = jwt.verify(token, "masynctechKey") as JwtPayload;
-        //! Verify the token
+        //? Verify the token
         const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY || "defaultKey") as JwtPayload;
 
         if (decoded) {
-            //! Save the user req obj
+            //? Save the user req obj
             (req as any).user = decoded;
             next();
         } else {
