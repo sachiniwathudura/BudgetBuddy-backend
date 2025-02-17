@@ -63,6 +63,48 @@ const categoryController = {
 
         res.status(200).json(categories); // Return categories as JSON
     }),
+
+
+    //!update category
+    update: asyncHandler(async (req: AuthRequest, res: Response) => {
+        const { categoryId } = req.params;
+        const { type, name }: { type?: string; name?: string } = req.body;
+
+        if (!req.user || !req.user.id) {
+            throw new Error("Unauthorized: User not found");
+        }
+
+        const userId = Number(req.user.id); // Convert user ID to number
+
+        // Check if category exists and belongs to the user
+        const category = await prisma.category.findUnique({
+            where: { id: Number(categoryId) },
+        });
+
+        if (!category || category.userId !== userId) {
+            res.status(404);
+            throw new Error("Category not found or user not authorized");
+        }
+
+        // Validate category type
+        const validTypes: string[] = ["income", "expense"];
+        if (type && !validTypes.includes(type.toLowerCase())) {
+            throw new Error(`Invalid category type: ${type}`);
+        }
+
+        // Prepare updated data
+        const updatedData: { name?: string; type?: CategoryType } = {};
+        if (name) updatedData.name = name.toLowerCase();
+        if (type) updatedData.type = type.toLowerCase() as CategoryType;
+
+        // Update category
+        const updatedCategory = await prisma.category.update({
+            where: { id: category.id },
+            data: updatedData,
+        });
+
+        res.json(updatedCategory);
+    }),
 };
 
 

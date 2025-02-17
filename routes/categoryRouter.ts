@@ -18,13 +18,13 @@ categoryRouter.get(
     isAuthenticated,
     (req: Request, res: Response,next: NextFunction) => categoryController.lists(req, res,next)
 );
-//
-// //! Update Category
-// categoryRouter.put(
-//     "/api/v1/categories/update/:categoryId",
-//     isAuthenticated,
-//     (req: Request, res: Response,next: NextFunction) => categoryController.update(req, res,next)
-// );
+
+//! Update Category
+categoryRouter.put(
+    "/api/v1/categories/update/:categoryId",
+    isAuthenticated,
+    (req: Request, res: Response,next: NextFunction) => categoryController.update(req, res,next)
+);
 //
 // //! Delete Category
 // categoryRouter.delete(
