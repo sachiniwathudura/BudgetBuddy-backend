@@ -83,6 +83,77 @@ class TransactionController {
 
         res.json(transactions);
     });
+
+    //! Update transaction
+    update = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+        const { id } = req.params;
+        const { type, categoryId, amount, date, description } = req.body;
+
+        if (!req.user) {
+            res.status(401);
+            throw new Error("Unauthorized");
+        }
+
+        //! Find the transaction
+        const transaction = await prisma.transaction.findUnique({
+            where: { id: Number(id) }, // Ensure ID is a number
+        });
+
+        if (!transaction) {
+            res.status(404);
+            throw new Error("Transaction not found");
+        }
+
+        if (transaction.userId !== Number(req.user.id)) {
+            res.status(403);
+            throw new Error("Unauthorized to update this transaction");
+        }
+
+        //! Update fields
+        const updatedTransaction = await prisma.transaction.update({
+            where: { id: Number(id) },
+            data: {
+                type: type ?? transaction.type,
+                categoryId: categoryId ?? transaction.categoryId,
+                amount: amount ?? transaction.amount,
+                date: date ? new Date(date).toISOString() : transaction.date,
+                description: description ?? transaction.description,
+            },
+        });
+
+        res.json(updatedTransaction);
+    });
+    //! Delete transaction
+    delete = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+        const { id } = req.params;
+
+        if (!req.user) {
+            res.status(401);
+            throw new Error("Unauthorized");
+        }
+
+        //! Find the transaction
+        const transaction = await prisma.transaction.findUnique({
+            where: { id: Number(id) }, // Ensure ID is a number
+        });
+
+        if (!transaction) {
+            res.status(404);
+            throw new Error("Transaction not found");
+        }
+
+        if (transaction.userId !== Number(req.user.id)) {
+            res.status(403);
+            throw new Error("Unauthorized to delete this transaction");
+        }
+
+        //! Delete transaction
+        await prisma.transaction.delete({
+            where: { id: Number(id) },
+        });
+
+        res.json({ message: "Transaction removed successfully" });
+    });
 }
 
 export default new TransactionController();
