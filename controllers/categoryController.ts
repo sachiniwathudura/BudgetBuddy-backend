@@ -1,11 +1,12 @@
 import { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
-import { PrismaClient, CategoryType } from "@prisma/client"; // Import CategoryType enum
-import {Category} from "../model/Category";
+import { PrismaClient, CategoryType } from "@prisma/client";
+import {Category} from "../model/Category"; // Import CategoryType enum
+
 const prisma = new PrismaClient();
 
 interface AuthRequest extends Request {
-    user?: { id: string }; // Assuming the user ID is stored as a string
+    user?: { id: string };
 }
 
 const categoryController = {
@@ -39,7 +40,7 @@ const categoryController = {
             throw new Error(`Category ${categoryExists.name} already exists`);
         }
 
-        const category = await prisma.category.create({
+        const category:Category = await prisma.category.create({
             data: {
                 name: normalizedName,
                 type: type.toLowerCase() as CategoryType, // ✅ Cast type to Prisma's CategoryType
@@ -49,7 +50,7 @@ const categoryController = {
 
         res.status(201).json(category);
     }),
-
+    //! List categories
     lists: asyncHandler(async (req: AuthRequest, res: Response) => {
         if (!req.user || !req.user.id) {
             throw new Error("Unauthorized: User not found");
@@ -64,7 +65,6 @@ const categoryController = {
         res.status(200).json(categories); // Return categories as JSON
     }),
 
-
     //!update category
     update: asyncHandler(async (req: AuthRequest, res: Response) => {
         const { categoryId } = req.params;
@@ -77,7 +77,7 @@ const categoryController = {
         const userId = Number(req.user.id); // Convert user ID to number
 
         // Check if category exists and belongs to the user
-        const category = await prisma.category.findUnique({
+        const category:Category|null = await prisma.category.findUnique({
             where: { id: Number(categoryId) },
         });
 
@@ -105,7 +105,58 @@ const categoryController = {
 
         res.json(updatedCategory);
     }),
-};
+    //! Delete category
+    delete: asyncHandler(async (req: AuthRequest, res: Response) => {
+        if (!req.user || !req.user.id) {
+            throw new Error("Unauthorized: User not found");
+        }
 
+        const userId = Number(req.user.id); // Convert user ID to number
+        const categoryId = Number(req.params.id); // Convert category ID to number
+
+        // Check if category exists and belongs to the user
+        const category = await prisma.category.findUnique({
+            where: { id: categoryId },
+        });
+
+        if (!category || category.userId !== userId) {
+            res.status(404);
+            throw new Error("Category not found or user not authorized");
+        }
+
+        // Define a default category name for reassignment
+        const defaultCategoryName = "Uncategorized";
+
+        // Check if an "Uncategorized" category exists for the user
+        let defaultCategory = await prisma.category.findFirst({
+            where: { name: defaultCategoryName, userId: userId },
+        });
+
+        // If no default category exists, create one
+        if (!defaultCategory) {
+            defaultCategory = await prisma.category.create({
+                data: {
+                    name: defaultCategoryName,
+                    type: "expense", // Default type, adjust if necessary
+                    userId: userId,
+                },
+            });
+        }
+
+        // Update transactions associated with the deleted category
+        await prisma.transaction.updateMany({
+            where: { userId: userId, categoryId: categoryId },
+            data: { categoryId: defaultCategory.id }, // Assign to "Uncategorized"
+        });
+
+        // Delete the category
+        await prisma.category.delete({ where: { id: categoryId } });
+
+        res.json({ message: "Category deleted and transactions reassigned" });
+    }),
+
+
+
+};
 
 export default categoryController;

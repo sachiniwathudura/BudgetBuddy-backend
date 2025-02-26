@@ -25,12 +25,12 @@ categoryRouter.put(
     isAuthenticated,
     (req: Request, res: Response,next: NextFunction) => categoryController.update(req, res,next)
 );
-//
-// //! Delete Category
-// categoryRouter.delete(
-//     "/api/v1/categories/delete/:id",
-//     isAuthenticated,
-//     (req: Request, res: Response,next: NextFunction) => categoryController.delete(req, res,next)
-// );
+
+//! Delete Category
+categoryRouter.delete(
+    "/api/v1/categories/delete/:id",
+    isAuthenticated,
+    (req: Request, res: Response,next: NextFunction) => categoryController.delete(req, res,next)
+);
 
 export default categoryRouter;
